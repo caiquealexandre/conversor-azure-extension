@@ -40,10 +40,15 @@ function preencherRealizado(value, sendResponse) {
 }
 
 function encontrarCampoInicio() {
-  const campoPorId = document.querySelector('#__bolt-textfield-input-8');
-  if (campoPorId) return campoPorId;
+  // O ID do input (__bolt-textfield-input-N) e gerado dinamicamente pelo Azure.
+  // O conteiner do campo Prazo permanece estavel entre as renderizacoes.
+  const campoPrazo = document.querySelector(
+    '#Prazo-input input[aria-label="Select a date..."], #Prazo-input input'
+  );
+  if (campoPrazo) return campoPrazo;
 
   const campoPorNome = document.querySelector([
+    '[aria-label="Date field for Prazo"] input',
     'input[aria-label*="data de início" i]',
     'input[aria-label*="data de inicio" i]',
     'input[aria-label*="start date" i]'
