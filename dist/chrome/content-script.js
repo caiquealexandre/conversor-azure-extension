@@ -39,28 +39,25 @@ function preencherRealizado(value, sendResponse) {
   sendResponse({ success: true });
 }
 
-function encontrarCampoInicio() {
-  const campoPorId = document.querySelector('#__bolt-textfield-input-8');
-  if (campoPorId) return campoPorId;
+function encontrarCampoPrazo() {
+  const campoPrazo = document.querySelector('#Prazo-input input');
+  if (campoPrazo) return campoPrazo;
 
   const campoPorNome = document.querySelector([
-    'input[aria-label*="data de início" i]',
-    'input[aria-label*="data de inicio" i]',
-    'input[aria-label*="start date" i]'
+    'input[aria-label*="prazo" i]',
+    'input[aria-label*="due date" i]'
   ].join(','));
   if (campoPorNome) return campoPorNome;
 
   const label = Array.from(document.querySelectorAll('label')).find(elemento => {
     const texto = elemento.textContent?.trim().toLocaleLowerCase();
-    return texto?.includes('data de início') ||
-      texto?.includes('data de inicio') ||
-      texto?.includes('start date');
+    return texto?.includes('prazo') || texto?.includes('due date');
   });
 
   return label?.htmlFor ? document.getElementById(label.htmlFor) : null;
 }
 
-function converterDataInicio(value) {
+function converterPrazo(value) {
   const texto = value?.trim();
   if (!texto) return NaN;
 
@@ -86,20 +83,20 @@ function converterDataInicio(value) {
 }
 
 function fecharTask(sendResponse) {
-  const campoInicio = encontrarCampoInicio();
-  if (!campoInicio) {
-    sendResponse({ success: false, error: 'Campo de data de início da task não encontrado.' });
+  const campoPrazo = encontrarCampoPrazo();
+  if (!campoPrazo) {
+    sendResponse({ success: false, error: 'Campo Prazo da task não encontrado.' });
     return;
   }
 
-  const dataInicio = converterDataInicio(campoInicio.value);
+  const prazo = converterPrazo(campoPrazo.value);
   const dataFim = Date.now();
-  if (!Number.isFinite(dataInicio) || dataInicio > dataFim) {
-    sendResponse({ success: false, error: 'A data de início da task é inválida.' });
+  if (!Number.isFinite(prazo) || prazo > dataFim) {
+    sendResponse({ success: false, error: 'O Prazo da task é inválido.' });
     return;
   }
 
-  const resultado = ((dataFim - dataInicio) / 3_600_000)
+  const resultado = ((dataFim - prazo) / 3_600_000)
     .toFixed(2)
     .replace('.', ',');
 

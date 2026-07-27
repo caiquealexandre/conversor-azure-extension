@@ -1,7 +1,7 @@
 {
     "manifest_version":  3,
     "name":  "Conversor de Horas — Azure DevOps",
-    "version":  "1.0.0",
+    "version":  "1.0.2",
     "description":  "Converte horas e minutos para decimal e preenche o campo Realizado no Azure DevOps.",
     "action":  {
                    "default_popup":  "popup.html",
