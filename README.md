@@ -4,10 +4,10 @@ Extensão de navegador que converte **horas e minutos** para o formato usado nos
 lançamentos de tempo de cada sistema. Um switch no topo do popup alterna entre
 os modos (a escolha fica salva):
 
-| Modo | Formato | Exemplo (1h40) | Cor |
+| Modo | Você digita | Resultado (1h40) | Cor |
 | --- | --- | --- | --- |
-| **Azure DevOps** | decimal: `horas + (minutos / 60)`, 2 casas | **1,67** (nunca 1,40) | azul |
-| **ServiceNow** | duração `HH:MM:SS` | **01:40:00** | verde |
+| **Azure DevOps** | horas e minutos (`1` e `40`) | decimal **1,67** (nunca 1,40) | azul |
+| **ServiceNow** | horas decimais (`1,67`) | duração **01:40:00** | verde |
 
 <p align="center">
   <img src="docs/popup.png" alt="Popup da extensão Conversor de horas — Azure DevOps" width="360">
@@ -66,9 +66,11 @@ processo na próxima vez que precisar.
 ## Como usar
 
 1. Clique no ícone da extensão e escolha **Azure DevOps** ou **ServiceNow** no switch.
-2. Digite as **horas** e os **minutos** trabalhados.
-3. O valor aparece automaticamente (ex.: `1` hora e `40` min → `1,67` no Azure,
-   `01:40:00` no ServiceNow).
+2. Digite o tempo trabalhado:
+   - **Azure:** **horas** e **minutos** (ex.: `1` e `40` → `1,67`);
+   - **ServiceNow:** **horas em decimal**, com vírgula ou ponto (ex.: `1,67` →
+     `01:40:00`; o valor é arredondado para o minuto mais próximo).
+3. O valor convertido aparece automaticamente.
 4. Leve o resultado ao sistema de uma destas formas:
    - **Copiar** — copia o valor decimal para a área de transferência e você cola
      manualmente no campo desejado.

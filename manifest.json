@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Conversor de Horas - Azure DevOps e ServiceNow",
-  "version": "2.0.0",
+  "name": "Conversor de Horas - Azure DevOps/ServiceNow",
+  "version": "2.0.1",
   "description": "Converte horas e minutos e preenche o tempo no Azure DevOps (decimal) e no ServiceNow (HH:MM:SS).",
   "action": {
     "default_popup": "popup.html",

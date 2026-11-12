@@ -83,8 +83,13 @@
     .switch input:checked + label { background: var(--primary); color: #fff; }
     .switch input:focus-visible + label { outline: 2px solid var(--text-primary); outline-offset: 1px; }
 
+    /* Azure: horas + minutos; ServiceNow: um campo de horas decimais */
     body[data-sistema="sn"] details,
-    body[data-sistema="sn"] #unidade { display: none; }
+    body[data-sistema="sn"] #unidade,
+    body[data-sistema="sn"] .field-azure,
+    body:not([data-sistema="sn"]) .field-sn { display: none; }
+
+    .field-sn { grid-column: 1 / -1; }
 
     .card {
       background: var(--bg-card);
@@ -247,15 +252,20 @@
 
   <main class="card">
     <div class="fields">
-      <div class="field">
+      <div class="field field-azure">
         <label for="horas">Horas</label>
         <input type="number" id="horas" min="0" step="1" inputmode="numeric" placeholder="0" />
         <div class="hint">Inteiro, sem negativos</div>
       </div>
-      <div class="field">
+      <div class="field field-azure">
         <label for="minutos">Minutos</label>
         <input type="number" id="minutos" min="0" max="59" step="1" inputmode="numeric" placeholder="0" />
         <div class="hint">Entre 0 e 59</div>
+      </div>
+      <div class="field field-sn">
+        <label for="horasDecimais">Horas (decimal)</label>
+        <input type="text" id="horasDecimais" inputmode="decimal" autocomplete="off" placeholder="0,00" />
+        <div class="hint">Ex.: 1,67 = 1h40 · vírgula ou ponto</div>
       </div>
     </div>
 

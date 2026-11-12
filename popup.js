@@ -2,6 +2,8 @@ const extensionApi = globalThis.browser ?? globalThis.chrome;
 
 const inputHoras = document.getElementById('horas');
 const inputMinutos = document.getElementById('minutos');
+const inputDecimal = document.getElementById('horasDecimais');
+const todosInputs = [inputHoras, inputMinutos, inputDecimal];
 const btnConverter = document.getElementById('btnConverter');
 const btnFecharTask = document.getElementById('btnFecharTask');
 const btnCopiar = document.getElementById('btnCopiar');
@@ -19,12 +21,49 @@ const CHAVE_SISTEMA = 'conversor-horas:sistema';
 
 const pad2 = numero => String(numero).padStart(2, '0');
 
+// Azure: entram horas inteiras + minutos (1h40) e sai o decimal com vírgula (1,67).
+function validarHorasMinutos() {
+  const horas = inputHoras.value === '' ? 0 : Number(inputHoras.value);
+  const minutos = inputMinutos.value === '' ? 0 : Number(inputMinutos.value);
+
+  // type="number" devolve '' para texto inválido ("1e", "-"): não tratar como 0.
+  if (inputHoras.validity.badInput || !Number.isInteger(horas)) {
+    return { ok: false, campo: inputHoras, mensagem: 'Informe as horas como um número inteiro.' };
+  }
+  if (horas < 0) {
+    return { ok: false, campo: inputHoras, mensagem: 'As horas não podem ser negativas.' };
+  }
+  if (inputMinutos.validity.badInput || !Number.isInteger(minutos)) {
+    return { ok: false, campo: inputMinutos, mensagem: 'Informe os minutos como um número inteiro.' };
+  }
+  if (minutos < 0 || minutos > 59) {
+    return { ok: false, campo: inputMinutos, mensagem: 'Os minutos devem estar entre 0 e 59.' };
+  }
+
+  return { ok: true, valor: (horas + (minutos / 60)).toFixed(2).replace('.', ',') };
+}
+
+// ServiceNow: entra decimal (1,67) e sai a duração HH:MM:SS (01:40:00),
+// arredondada para o minuto mais próximo.
+function validarHorasDecimais() {
+  const texto = inputDecimal.value.trim();
+  const horas = texto === '' ? 0 : Number(texto.replace(',', '.'));
+
+  if (!/^\d*([.,]\d*)?$/.test(texto) || !Number.isFinite(horas)) {
+    return { ok: false, campo: inputDecimal, mensagem: 'Informe as horas em decimal, sem negativos (ex.: 1,67).' };
+  }
+
+  const totalMinutos = Math.round(horas * 60);
+  return { ok: true, valor: `${pad2(Math.floor(totalMinutos / 60))}:${pad2(totalMinutos % 60)}:00` };
+}
+
 const SISTEMAS = {
   azure: {
     titulo: 'Conversor de horas — Azure DevOps',
     botaoConverter: 'Converter para horas do Azure',
     rotuloResultado: 'Valor para lançar no Azure DevOps:',
-    formatar: (horas, minutos) => (horas + (minutos / 60)).toFixed(2).replace('.', ','),
+    calcular: validarHorasMinutos,
+    campos: [inputHoras, inputMinutos],
     mensagemPreencher: 'PREENCHER_AZURE',
     mensagemFecharTask: 'FECHAR_TASK',
     erroConexao: 'Abra um item do Azure DevOps em dev.azure.com ou visualstudio.com para preencher o campo automaticamente.',
@@ -36,7 +75,8 @@ const SISTEMAS = {
     titulo: 'Conversor de horas — ServiceNow',
     botaoConverter: 'Converter para horas do ServiceNow',
     rotuloResultado: 'Valor para lançar no ServiceNow (Duração real):',
-    formatar: (horas, minutos) => `${pad2(horas)}:${pad2(minutos)}:00`,
+    calcular: validarHorasDecimais,
+    campos: [inputDecimal],
     mensagemPreencher: 'PREENCHER_SN',
     mensagemFecharTask: 'FECHAR_TASK_SN',
     erroConexao: 'Abra uma Tarefa de Scrum do ServiceNow (service-now.com) para preencher o campo automaticamente.',
@@ -49,49 +89,24 @@ const SISTEMAS = {
 let sistema = SISTEMAS.azure;
 let timerCopiado = null;
 
-function validar() {
-  const horas = inputHoras.value === '' ? 0 : Number(inputHoras.value);
-  const minutos = inputMinutos.value === '' ? 0 : Number(inputMinutos.value);
-
-  inputHoras.classList.remove('invalid');
-  inputMinutos.classList.remove('invalid');
-
-  if (!Number.isFinite(horas) || !Number.isInteger(horas)) {
-    inputHoras.classList.add('invalid');
-    return { ok: false, mensagem: 'Informe as horas como um número inteiro.' };
-  }
-  if (horas < 0) {
-    inputHoras.classList.add('invalid');
-    return { ok: false, mensagem: 'As horas não podem ser negativas.' };
-  }
-  if (!Number.isFinite(minutos) || !Number.isInteger(minutos)) {
-    inputMinutos.classList.add('invalid');
-    return { ok: false, mensagem: 'Informe os minutos como um número inteiro.' };
-  }
-  if (minutos < 0 || minutos > 59) {
-    inputMinutos.classList.add('invalid');
-    return { ok: false, mensagem: 'Os minutos devem estar entre 0 e 59.' };
-  }
-
-  return { ok: true, horas, minutos };
-}
-
 function mostrarErro(mensagem) {
   boxErro.textContent = mensagem;
   boxErro.classList.add('show');
 }
 
 function converter() {
-  const valores = validar();
+  const resultado = sistema.calcular();
+  todosInputs.forEach(input => input.classList.remove('invalid'));
 
-  if (!valores.ok) {
-    mostrarErro(valores.mensagem);
+  if (!resultado.ok) {
+    resultado.campo.classList.add('invalid');
+    mostrarErro(resultado.mensagem);
     boxResultado.classList.remove('show');
     return false;
   }
 
   boxErro.classList.remove('show');
-  spanValor.textContent = sistema.formatar(valores.horas, valores.minutos);
+  spanValor.textContent = resultado.valor;
   boxResultado.classList.add('show');
   return true;
 }
@@ -116,13 +131,13 @@ async function copiarResultado() {
 }
 
 function limpar() {
-  inputHoras.value = '';
-  inputMinutos.value = '';
-  inputHoras.classList.remove('invalid');
-  inputMinutos.classList.remove('invalid');
+  todosInputs.forEach(input => {
+    input.value = '';
+    input.classList.remove('invalid');
+  });
   boxErro.classList.remove('show');
   boxResultado.classList.remove('show');
-  inputHoras.focus();
+  sistema.campos[0].focus();
   limparCampoDaPagina();
 }
 
@@ -174,7 +189,9 @@ async function enviarParaGuiaAtiva(message) {
 }
 
 async function adicionar() {
-  if (!converter()) return;
+  // Resultado visível já está em sincronia com os campos (ou veio de "Fechar task"):
+  // reconverter campos vazios sobrescreveria esse valor com zero.
+  if (!boxResultado.classList.contains('show') && !converter()) return;
 
   try {
     const response = await enviarParaGuiaAtiva({
@@ -232,9 +249,10 @@ function aplicarSistema(chave) {
   rotuloResultado.textContent = sistema.rotuloResultado;
 
   boxErro.classList.remove('show');
+  todosInputs.forEach(input => input.classList.remove('invalid'));
   // O resultado exibido está no formato do sistema anterior (inclusive o vindo
   // de "Fechar task"); com entrada digitada, reconverte (e revalida) no novo formato.
-  if (inputHoras.value.trim() || inputMinutos.value.trim()) {
+  if (sistema.campos.some(input => input.value.trim())) {
     converter();
   } else {
     boxResultado.classList.remove('show');
@@ -254,13 +272,12 @@ btnFecharTask.addEventListener('click', fecharTask);
 btnCopiar.addEventListener('click', copiarResultado);
 btnAdicionar.addEventListener('click', adicionar);
 btnLimpar.addEventListener('click', limpar);
-inputHoras.addEventListener('input', converter);
-inputMinutos.addEventListener('input', converter);
-[inputHoras, inputMinutos].forEach(elemento => {
-  elemento.addEventListener('keydown', evento => {
+todosInputs.forEach(input => {
+  input.addEventListener('input', converter);
+  input.addEventListener('keydown', evento => {
     if (evento.key === 'Enter') converter();
   });
 });
 
 aplicarSistema(lerSistemaSalvo());
-inputHoras.focus();
+sistema.campos[0].focus();
