@@ -2,15 +2,16 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Conversor de Horas — Azure DevOps</title>
+  <title>Conversor de Horas — Azure DevOps e ServiceNow</title>
   <style>
     /* ============================================================
-       Design tokens — paleta inspirada no Fluent / Azure DevOps
+       Design tokens — Azure (padrão, Fluent) e ServiceNow (verde)
        ============================================================ */
     :root {
-      --azure-blue: #0078D4;
-      --azure-blue-hover: #106EBE;
-      --azure-blue-active: #005A9E;
+      --primary: #0078D4;
+      --primary-hover: #106EBE;
+      --primary-active: #005A9E;
+      --primary-soft: #EFF6FC;
       --bg-page: #F3F2F1;
       --bg-card: #FFFFFF;
       --text-primary: #201F1E;
@@ -22,6 +23,15 @@
       --success: #107C10;
       --radius: 4px;
       --shadow-card: 0 1.6px 3.6px rgba(0,0,0,.10), 0 0.3px 0.9px rgba(0,0,0,.08);
+    }
+
+    body[data-sistema="sn"] {
+      --primary: #1E8E3E;
+      --primary-hover: #187A34;
+      --primary-active: #126329;
+      --primary-soft: #E8F5EC;
+      --bg-page: #F4FAF6;
+      --border-focus: #1E8E3E;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -41,12 +51,40 @@
 
     .logo {
       width: 22px; height: 22px;
-      background: var(--azure-blue);
+      background: var(--primary);
       clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
       flex-shrink: 0;
     }
 
     header h1 { font-size: 15px; font-weight: 600; }
+
+    /* Switch segmentado Azure | ServiceNow */
+    .switch {
+      display: flex;
+      margin-top: 10px;
+      padding: 2px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .switch input { position: absolute; opacity: 0; pointer-events: none; }
+    .switch label {
+      flex: 1;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 8px;
+      border-radius: 3px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      user-select: none;
+      transition: background .1s ease, color .1s ease;
+    }
+    .switch input:checked + label { background: var(--primary); color: #fff; }
+    .switch input:focus-visible + label { outline: 2px solid var(--text-primary); outline-offset: 1px; }
+
+    body[data-sistema="sn"] details,
+    body[data-sistema="sn"] #unidade { display: none; }
 
     .card {
       background: var(--bg-card);
@@ -115,19 +153,19 @@
     }
     button:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 2px; }
 
-    .btn-primary { background: var(--azure-blue); color: #fff; flex: 1 1 100%; }
-    .btn-primary:hover  { background: var(--azure-blue-hover); }
-    .btn-primary:active { background: var(--azure-blue-active); }
+    .btn-primary { background: var(--primary); color: #fff; flex: 1 1 100%; }
+    .btn-primary:hover  { background: var(--primary-hover); }
+    .btn-primary:active { background: var(--primary-active); }
 
     .btn-secondary { background: #fff; color: var(--text-primary); border-color: var(--border); flex: 1; }
-    .btn-secondary:hover { background: #F3F2F1; }
+    .btn-secondary:hover { background: var(--bg-page); }
 
     .result {
       display: none;
       margin-top: 14px;
       padding: 12px;
-      border-left: 4px solid var(--azure-blue);
-      background: #EFF6FC;
+      border-left: 4px solid var(--primary);
+      background: var(--primary-soft);
       border-radius: 0 var(--radius) var(--radius) 0;
     }
     .result.show { display: block; }
@@ -138,7 +176,7 @@
       margin-top: 3px;
       font-size: 22px;
       font-weight: 600;
-      color: var(--azure-blue-active);
+      color: var(--primary-active);
       font-variant-numeric: tabular-nums;
     }
 
@@ -160,7 +198,7 @@
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      color: var(--azure-blue-active);
+      color: var(--primary-active);
       user-select: none;
     }
 
@@ -197,7 +235,13 @@
   <header>
     <div class="header-bar">
       <div class="logo" aria-hidden="true"></div>
-      <h1>Conversor de horas — Azure DevOps</h1>
+      <h1 id="titulo">Conversor de horas — Azure DevOps</h1>
+    </div>
+    <div class="switch" role="radiogroup" aria-label="Sistema">
+      <input type="radio" name="sistema" id="sistemaAzure" value="azure" checked />
+      <label for="sistemaAzure">Azure DevOps</label>
+      <input type="radio" name="sistema" id="sistemaSn" value="sn" />
+      <label for="sistemaSn">ServiceNow</label>
     </div>
   </header>
 
@@ -226,9 +270,9 @@
     </div>
 
     <div class="result" id="resultado" aria-live="polite">
-      <div class="result-label">Valor para lançar no Azure DevOps:</div>
+      <div class="result-label" id="rotuloResultado">Valor para lançar no Azure DevOps:</div>
       <div class="result-value">
-        <span id="valorDecimal">0,00</span> horas
+        <span id="valorDecimal">0,00</span> <span id="unidade">horas</span>
         <span class="copy-feedback" id="copiado">Copiado ✓</span>
       </div>
     </div>

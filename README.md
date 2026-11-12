@@ -1,10 +1,13 @@
-# Conversor de Horas — Azure DevOps
+# Conversor de Horas - Azure DevOps e ServiceNow
 
-Extensão de navegador que converte **horas e minutos** para o formato **decimal**
-usado nos lançamentos de tempo do Azure DevOps.
+Extensão de navegador que converte **horas e minutos** para o formato usado nos
+lançamentos de tempo de cada sistema. Um switch no topo do popup alterna entre
+os modos (a escolha fica salva):
 
-> Fórmula: `horas decimais = horas + (minutos / 60)`, arredondado para 2 casas.
-> Exemplo: **1h40 = 1,67** (nunca 1,40).
+| Modo | Formato | Exemplo (1h40) | Cor |
+| --- | --- | --- | --- |
+| **Azure DevOps** | decimal: `horas + (minutos / 60)`, 2 casas | **1,67** (nunca 1,40) | azul |
+| **ServiceNow** | duração `HH:MM:SS` | **01:40:00** | verde |
 
 <p align="center">
   <img src="docs/popup.png" alt="Popup da extensão Conversor de horas — Azure DevOps" width="360">
@@ -62,14 +65,17 @@ processo na próxima vez que precisar.
 
 ## Como usar
 
-1. Clique no ícone da extensão.
+1. Clique no ícone da extensão e escolha **Azure DevOps** ou **ServiceNow** no switch.
 2. Digite as **horas** e os **minutos** trabalhados.
-3. O valor decimal aparece automaticamente (ex.: `1` hora e `40` min → `1,67`).
-4. Leve o resultado ao Azure DevOps de uma destas formas:
+3. O valor aparece automaticamente (ex.: `1` hora e `40` min → `1,67` no Azure,
+   `01:40:00` no ServiceNow).
+4. Leve o resultado ao sistema de uma destas formas:
    - **Copiar** — copia o valor decimal para a área de transferência e você cola
      manualmente no campo desejado.
    - **Adicionar automaticamente** — veja abaixo.
-   - **Limpar** — zera os campos.
+   - **Limpar** — zera os campos do popup e também apaga o campo de tempo da
+     task aberta (Realizado no Azure / Duração real no ServiceNow). Fora de uma
+     task, limpa só o popup.
 
 Há também uma **tabela de referência** recolhível (5min = 0,08 … 60min = 1,00)
 dentro do popup.
@@ -83,6 +89,21 @@ ser lançada):
 2. Clique em **Adicionar automaticamente**.
 3. A extensão insere o valor decimal diretamente no campo **Horas Realizadas
    (Completed Work)** do item — sem precisar copiar e colar.
+
+**Fechar task** calcula o tempo desde a data de início da task até agora e
+preenche o mesmo campo.
+
+### Adicionar automaticamente ao ServiceNow
+
+Com uma **Tarefa de Scrum** (`STSK…`) aberta em `*.service-now.com` e o modo
+**ServiceNow** selecionado:
+
+- **Adicionar automaticamente** preenche o campo **Duração real** (dias, horas,
+  minutos e segundos; acima de 24h o excedente vai para dias).
+- **Fechar task** calcula o tempo desde a **Data de início real** (ou a data de
+  início planejada, se a real estiver vazia) até agora e preenche a Duração real.
+
+Depois é só salvar a task no ServiceNow.
 
 ---
 

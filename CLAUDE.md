@@ -1,19 +1,24 @@
-# Conversor de Horas — Azure DevOps (Extensão Chrome)
+# Conversor de Horas — Azure DevOps e ServiceNow (Extensão Chrome/Firefox)
 
 ## O que é este projeto
 
-Extensão do Chrome (Manifest V3, popup) que converte horas e minutos para o
-formato decimal usado nos lançamentos de tempo do Azure DevOps.
+Extensão do Chrome e do Firefox (Manifest V3, popup) que converte horas e minutos
+para o formato de lançamento de tempo de dois sistemas, alternados por um switch
+no popup (escolha salva em `localStorage`):
 
-Fórmula: `horas decimais = horas + (minutos / 60)`, arredondado para 2 casas.
-Exibição sempre com vírgula como separador decimal (pt-BR).
-Atenção: 1h40 = 1,67 — nunca 1,40.
+- **Azure DevOps**: `horas decimais = horas + (minutos / 60)`, 2 casas, vírgula
+  (pt-BR). Atenção: 1h40 = 1,67 — nunca 1,40. Paleta azul.
+- **ServiceNow**: duração `HH:MM:SS` (1h40 = 01:40:00). Paleta verde e branca
+  (`body[data-sistema="sn"]` sobrescreve os tokens `--primary*`).
 
 ## Estrutura
 
-- `manifest.json` — Manifest V3, sem permissões (propósito único, revisão rápida na Web Store)
+- `manifest.json` — Manifest V3, só `activeTab`; content scripts para Azure e para `*.service-now.com` (`all_frames`)
 - `popup.html` — UI completa com CSS inline no `<style>`; largura fixa de 380px (popups não têm viewport de página)
-- `popup.js` — toda a lógica; JS externo é obrigatório (MV3 proíbe script inline por CSP)
+- `popup.js` — toda a lógica do popup; config por sistema em `SISTEMAS`; JS externo é obrigatório (MV3 proíbe script inline por CSP)
+- `content-script.js` — Azure: preenche "Realizado" (`input[id^="__bolt-Realizado-input"]`, o último no DOM = work item da frente) e "Fechar task"
+- `content-script-sn.js` — ServiceNow (Tarefa de Scrum `rm_scrum_task`, formulário classic no iframe `gsft_main`): preenche "Duração real" (`ni.rm_scrum_task.work_durationdur_{day,hour,min,sec}` + hidden `rm_scrum_task.work_duration`); "Fechar task" usa `rm_scrum_task.work_start` (fallback `start_date`), formato `dd-MM-yyyy HH:mm:ss`. Só o frame que tem o campo responde à mensagem
+- `dist/chrome` e `dist/firefox` — cópias manuais para empacotar; o manifest do Chrome não tem `browser_specific_settings`
 - `icons/` — losango azul #0078D4 em 16/48/128px
 
 Existe também uma versão standalone anterior (`index.html` único, responsivo,
@@ -42,7 +47,7 @@ com media queries) que deu origem a este projeto — a extensão é a adaptaçã
 
 ## Publicação (Chrome Web Store)
 
-- Zip com os arquivos na raiz (não a pasta dentro do zip): `zip -r conversor-azure.zip manifest.json popup.html popup.js icons/`
+- Zip com os arquivos na raiz (não a pasta dentro do zip): `zip -r conversor-azure.zip manifest.json popup.html popup.js content-script.js content-script-sn.js icons/`
 - Dashboard: https://chrome.google.com/webstore/devconsole — taxa única de US$ 5
 - Usar e-mail da organização (Rocket IT), não conta pessoal
 - Visibilidade "não listada" para uso interno da equipe (compartilhar por link)

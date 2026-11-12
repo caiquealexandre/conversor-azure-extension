@@ -21,10 +21,20 @@ extensionApi.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   return false;
 });
 
-function preencherRealizado(value, sendResponse) {
-  const inputAzure = document.querySelector('#__bolt-Realizado-input');
+const SELETOR_REALIZADO = 'input[id^="__bolt-Realizado-input"]';
+
+// O Azure permite abrir um work item por cima de outro: os de trás continuam no
+// DOM e vêm antes. O da frente é sempre o último renderizado.
+function ultimo(raiz, seletor) {
+  const elementos = raiz.querySelectorAll(seletor);
+  return elementos[elementos.length - 1] ?? null;
+}
+
+function preencherRealizado(value, sendResponse, inputAzure = ultimo(document, SELETOR_REALIZADO)) {
   if (!inputAzure) {
-    sendResponse({ success: false, error: 'Campo Realizado do Azure DevOps não encontrado.' });
+    // Limpar (valor vazio) fora de um work item não tem o que apagar: não é erro.
+    if (value === '') sendResponse({ success: true });
+    else sendResponse({ success: false, error: 'Campo Realizado do Azure DevOps não encontrado.' });
     return;
   }
 
@@ -39,25 +49,35 @@ function preencherRealizado(value, sendResponse) {
   sendResponse({ success: true });
 }
 
-function encontrarCampoInicio() {
-  const campoPorId = document.querySelector('#__bolt-textfield-input-8');
-  if (campoPorId) return campoPorId;
-
-  const campoPorNome = document.querySelector([
+function buscarCampoInicio(raiz) {
+  const campoPorNome = ultimo(raiz, [
     'input[aria-label*="data de início" i]',
     'input[aria-label*="data de inicio" i]',
     'input[aria-label*="start date" i]'
   ].join(','));
   if (campoPorNome) return campoPorNome;
 
-  const label = Array.from(document.querySelectorAll('label')).find(elemento => {
+  const label = Array.from(raiz.querySelectorAll('label')).findLast(elemento => {
     const texto = elemento.textContent?.trim().toLocaleLowerCase();
     return texto?.includes('data de início') ||
       texto?.includes('data de inicio') ||
       texto?.includes('start date');
   });
+  return label?.htmlFor ? ultimo(raiz, `[id="${CSS.escape(label.htmlFor)}"]`) : null;
+}
 
-  return label?.htmlFor ? document.getElementById(label.htmlFor) : null;
+// Sobe a partir do Realizado do work item da frente até achar a data de início,
+// sem passar do contêiner que já inclui outro work item (o de trás).
+function encontrarCampoInicio(realizado) {
+  let raiz = realizado;
+  while (raiz.parentElement && raiz.parentElement.querySelectorAll(SELETOR_REALIZADO).length === 1) {
+    raiz = raiz.parentElement;
+    const campo = buscarCampoInicio(raiz);
+    if (campo) return campo;
+  }
+
+  // Id gerado por contador: último recurso, e só dentro do work item já delimitado.
+  return raiz.querySelector('#__bolt-textfield-input-8');
 }
 
 function converterDataInicio(value) {
@@ -86,7 +106,13 @@ function converterDataInicio(value) {
 }
 
 function fecharTask(sendResponse) {
-  const campoInicio = encontrarCampoInicio();
+  const realizado = ultimo(document, SELETOR_REALIZADO);
+  if (!realizado) {
+    sendResponse({ success: false, error: 'Campo Realizado do Azure DevOps não encontrado.' });
+    return;
+  }
+
+  const campoInicio = encontrarCampoInicio(realizado);
   if (!campoInicio) {
     sendResponse({ success: false, error: 'Campo de data de início da task não encontrado.' });
     return;
@@ -105,5 +131,5 @@ function fecharTask(sendResponse) {
 
   preencherRealizado(resultado, response => {
     sendResponse(response.success ? { success: true, value: resultado } : response);
-  });
+  }, realizado);
 }
