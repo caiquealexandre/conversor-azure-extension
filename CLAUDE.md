@@ -8,7 +8,8 @@ no popup (escolha salva em `localStorage`):
 
 - **Azure DevOps**: `horas decimais = horas + (minutos / 60)`, 2 casas, vírgula
   (pt-BR). Atenção: 1h40 = 1,67 — nunca 1,40. Paleta azul.
-- **ServiceNow**: duração `HH:MM:SS` (1h40 = 01:40:00). Paleta verde e branca
+- **ServiceNow**: entrada em horas decimais (campo único `#horasDecimais`, vírgula
+  ou ponto) e saída em duração `HH:MM:SS`, arredondada ao minuto (1,67 = 01:40:00). Paleta verde e branca
   (`body[data-sistema="sn"]` sobrescreve os tokens `--primary*`).
 
 ## Estrutura
@@ -28,7 +29,7 @@ com media queries) que deu origem a este projeto — a extensão é a adaptaçã
 
 - Visual Fluent/Azure: fonte Segoe UI, azul primário #0078D4, cinza #F3F2F1 de fundo, cards com sombra sutil, border-radius 4px
 - Tabela de referência (5min=0,08 ... 60min=1,00) dentro de `<details>` recolhível para não alongar o popup
-- Validações: horas inteiras ≥ 0; minutos inteiros entre 0 e 59; campos vazios tratados como 0; mensagens de erro em pt-BR com destaque vermelho no campo inválido
+- Validações: Azure — horas inteiras ≥ 0, minutos inteiros entre 0 e 59; ServiceNow — decimal ≥ 0 (vírgula ou ponto); campos vazios tratados como 0; mensagens de erro em pt-BR com destaque vermelho no campo inválido
 - Conversão automática no evento `input`, além do botão "Converter para horas do Azure"
 - Botão copiar usa `navigator.clipboard` com fallback para `execCommand`
 
